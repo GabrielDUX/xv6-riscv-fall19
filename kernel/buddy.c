@@ -99,7 +99,7 @@ bd_print() {
     printf("size %d (blksz %d nblk %d): free list: ", k, BLK_SIZE(k), NBLK(k));
     lst_print(&bd_sizes[k].free);
     printf("  alloc:");
-    bd_print_vector(bd_sizes[k].alloc, NBLK(k));
+    bd_print_vector(bd_sizes[k].alloc, NBLK(k)/2);
     if(k > 0) {
       printf("  split:");
       bd_print_vector(bd_sizes[k].split, NBLK(k));
@@ -193,11 +193,10 @@ bd_free(void *p) {
   for (k = size(p); k < MAXSIZE; k++) {  //从底向上找，合并未被分配的伙伴块。直到找到一块内存块，其伙伴块已经被分配。
     int bi = blk_index(k, p);
     int buddy = (bi % 2 == 0) ? bi+1 : bi-1; // 伙伴块
-    // bit_clear(bd_sizes[k].alloc, bi);  // free p at size k
-    if (!bit_isset(bd_sizes[k].alloc, buddy)) {  // is buddy allocated? 如果伙伴没有被分配，就合并，成为一块更大块的空闲块
+    bit_cov(bd_sizes[k].alloc, bi);  // free p at size k
+    if (bit_isset(bd_sizes[k].alloc, buddy/2)) {  // is buddy allocated? 如果伙伴没有被分配，就合并，成为一块更大块的空闲块
       break;   // break out of loop
     }
-    bit_clear(bd_sizes[k].alloc, bi);  // free p at size k
     // budy is free; merge with buddy
     q = addr(k, buddy);
     lst_remove(q);    // remove buddy from free list

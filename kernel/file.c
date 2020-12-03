@@ -92,7 +92,6 @@ fileclose(struct file *f)
     return;
   }
   f->ref = 0;
-  f->type = FD_NONE;
   release(&ftable.lock);
 
   if(f->type == FD_PIPE){
@@ -102,6 +101,8 @@ fileclose(struct file *f)
     iput(f->ip);
     end_op(f->ip->dev);
   }
+  f->type = FD_NONE;
+  bd_free(f);
 
   // 以下为原代码
   // ff的作用：在释放ftable的锁之后对关闭的file做后续操作
